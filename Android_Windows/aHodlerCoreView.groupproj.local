@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
-  <Transactions/>
-  <Default.Personality>
-    <Projects ActiveProject="C:\Users\PC\Desktop\HODLER Core Alpha\Winand\HODLER_Core_Android.dproj"/>
-  </Default.Personality>
+	<Transactions/>
+	<Default.Personality>
+		<Projects ActiveProject="C:\Users\HODL\Desktop\Hodler_git\WindowsAndroidVersion18_10\Android_Windows\HODLER_Core_Windows.dproj"/>
+	</Default.Personality>
 </BorlandProject>

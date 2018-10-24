@@ -28,7 +28,7 @@ type
 
 const
   // all supported coin
-  availableCoin: array [0 .. 4] of coinInfo = ((id: 0; displayName: 'Bitcoin';
+  availableCoin: array [0 .. 5] of coinInfo = ((id: 0; displayName: 'Bitcoin';
     name: 'bitcoin'; shortcut: 'BTC'; WifByte: '80'; p2sh: '05'; p2pk: '00';
 
     flag: 0; decimals: 8; availableFirstLetter: '13b';
@@ -49,6 +49,9 @@ const
 
     ), (id: 1; displayName: 'Ethereum'; name: 'ethereum'; shortcut: 'ETH';
     WifByte: ''; p2pk: '00'; flag: 1; decimals: 18; availableFirstLetter: '0';
+
+    ), (id: 1; displayName: 'Ravencoin'; name: 'ravencoin'; shortcut: 'RVN';
+    WifByte: '80';p2sh :'7a'; p2pk: '3c'; flag: 0; decimals: 8; availableFirstLetter: 'Rr';
 
     )
 
@@ -74,8 +77,9 @@ begin
       URL := 'https://blockchair.com/bitcoin-cash/transaction/';
     4:
       URL := 'https://etherscan.io/tx/';
-
-  end;
+    5:
+      URL := 'https://ravencoin.network/tx/';
+    end;
 
   result := URL + hash;
 end;
