@@ -67,6 +67,7 @@ procedure PrepareSendTabAndSend(from: TWalletInfo; sendto: AnsiString;
 procedure CopyParentTagStringToClipboard(Sender : TObject);
 procedure addNewWalletPanelClick(Sender : TObject);
 procedure btnCreateNewWalletClick(Sender: TObject);
+procedure CreateCopyImageButtonOnTEdits();
 
 var
   SyncOpenWallet: TThread;
@@ -77,6 +78,25 @@ uses uHome, misc, AccountData, base58, bech32, CurrencyConverter, SyncThr, WIF,
   Bitcoin, coinData, cryptoCurrencyData, Ethereum, secp256k1, tokenData,
   transactions,  AccountRelated;
 
+procedure CreateCopyImageButtonOnTEdits();
+var
+  fmxObj , cp : TFmxObject;
+begin
+
+  for fmxObj in frmhome.Children do
+  begin
+
+    if fmxObj is TEdit then
+    begin
+
+      cp := frmhome.CopYImageTemplate.Clone(fmxObj);
+      cp.Parent := fmxObj;
+
+    end;
+
+  end;
+
+end;
 
 procedure btnCreateNewWalletClick(Sender: TObject);
 begin

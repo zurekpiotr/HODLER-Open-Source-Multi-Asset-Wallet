@@ -52,7 +52,8 @@ URLMon,
   ZXing.BarcodeFormat,
   ZXing.ReadResult,
   ZXing.ScanManager, 
- {$IF NOT DEFINED(LINUX)} System.Sensors, System.Sensors.Components, {$ENDIF}  FMX.ComboEdit;
+ {$IF NOT DEFINED(LINUX)} System.Sensors, System.Sensors.Components, {$ENDIF}  FMX.ComboEdit,
+  TCopyableData;
 
 type
 
@@ -695,6 +696,7 @@ type
     HistoryTransactionDate: TEdit;
     HistoryTransactionValue: TEdit;
     HistoryTransactionID: TEdit;
+    CopYImageTemplate: TImage;
 
     procedure btnOptionsClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -2950,6 +2952,7 @@ begin
     {$ENDIF}
   AccountRelated.InitializeHodler;
   BackupInfoLabel.Position.Y := 100000;
+  CreateCopyImageButtonOnTEdits();
 end;
 
 procedure TfrmHome.FormFocusChanged(Sender: TObject);

@@ -689,6 +689,7 @@ type
     ToolBar13: TToolBar;
     Label13: TLabel;
     Button7: TButton;
+    CopYImageTemplate: TImage;
 
     procedure btnOptionsClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);

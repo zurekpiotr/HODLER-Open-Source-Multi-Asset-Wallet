@@ -543,6 +543,7 @@
         <DCCReference Include="additionalUnits\AccountRelated.pas"/>
         <DCCReference Include="additionalUnits\QRRelated.pas"/>
         <DCCReference Include="additionalUnits\FileManagerRelated.pas"/>
+        <DCCReference Include="Components\TCopyableData.pas"/>
         <RcItem Include="Jet.style">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>
