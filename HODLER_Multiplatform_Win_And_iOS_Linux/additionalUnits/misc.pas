@@ -368,7 +368,7 @@ const
 
 var
   dashBoardFontSize: Integer =
-  {$IF (DEFINED(MSWINDOWS) OR DEFINED(LINUX))}14{$ELSE}8{$ENDIF};
+  {$IF (DEFINED(MSWINDOWS) OR DEFINED(LINUX))}14{$ELSE}14{$ENDIF};
   TCAIterations: integer;
   userSavedSeed: Boolean;
   saveSeedInfoShowed: Boolean = false;

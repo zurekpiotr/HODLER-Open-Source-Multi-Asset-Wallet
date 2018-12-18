@@ -2078,9 +2078,10 @@ begin
   TThread.CreateAnonymousThread(
     procedure()
     begin
-      SyncThr.SynchronizeCryptoCurrency(CurrentCoin);
-      reloadWalletView;
-    end)
+      //SyncThr.SynchronizeCryptoCurrency(CurrentCoin);
+      //reloadWalletView;
+      RefreshCurrentWallet(Sender);
+    end).Start;
 end;
 
 procedure TfrmHome.TransactionWaitForSendLinkLabelClick(Sender: TObject);
