@@ -5,6 +5,8 @@ Win64/
 *.key
 *.keystore
 /**/*.bak
+/**/*.o
+/**/*.dcu
 
 
 
