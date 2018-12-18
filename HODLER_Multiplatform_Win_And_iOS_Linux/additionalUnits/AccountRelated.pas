@@ -872,6 +872,7 @@ begin
       popupWindow.Create(dictionary('FailedToDecrypt'));
       exit;
     end;
+
     Tthread.CreateAnonymousThread(
       procedure
       var
@@ -991,7 +992,8 @@ begin
     begin
       if cc.deleted = true then
         continue;
-
+      if TWalletInfo(cc).inPool then Continue;
+      
       Panel := TPanel.Create(YaddressesVertScrollBox);
       Panel.Parent := YaddressesVertScrollBox;
       Panel.Visible := true;
@@ -1000,7 +1002,7 @@ begin
       Panel.TagObject := cc;
       Panel.TagString := cc.addr;
       Panel.OnClick := OpenWalletViewFromYWalletList;
-
+      Panel.Tag := $deadbeef; //Taging Sender for Keypool related
       Panel.Margins.Bottom:=1;
       addrLbl := TCopyableLabel.Create(Panel);
       addrLbl.image.Align := TAlignLayout.Right;

@@ -389,7 +389,7 @@ var
 
 implementation
 
-uses Bitcoin, uHome, base58, Ethereum, coinData, strutils, secp256k1 ,AccountRelated
+uses Bitcoin, uHome, base58, Ethereum, coinData, strutils, secp256k1 ,AccountRelated,KeypoolRelated
 {$IFDEF ANDROID}
 {$ELSE}
 {$ENDIF};
@@ -1251,10 +1251,19 @@ begin
       Tthread.Synchronize(nil,
         procedure
         begin
-           frmhome.FormShow(nil);
+          frmhome.FormShow(nil);
         AccountRelated.LoadCurrentAccount(name);
-
+       //  CurrentAccount.SaveFiles;
         end);
+          Tthread.Synchronize(nil,
+        procedure
+        begin
+           AccountRelated.LoadCurrentAccount(name);
+        end);
+        Tthread.CreateAnonymousThread(procedure begin
+
+              KeypoolRelated.startFullfillingKeypool(seed);
+              end).Start;
 
     end);
 

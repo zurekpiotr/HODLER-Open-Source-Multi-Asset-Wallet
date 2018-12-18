@@ -64,7 +64,7 @@ implementation
 
 uses uHome, misc, AccountData, base58, bech32, CurrencyConverter, SyncThr, WIF,
   Bitcoin, coinData, cryptoCurrencyData, Ethereum, secp256k1, tokenData,
-  transactions, AccountRelated, walletViewRelated;
+  transactions, AccountRelated, walletViewRelated,KeypoolRelated;
 
 procedure createExportPrivateKeyList();
 var
@@ -470,12 +470,12 @@ end;
 
 function isEQRGenerated: Boolean;
 begin
-  result := FileExists(System.IOUtils.TPath.Combine( {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
-      (){$ENDIF},
-    currentAccount.name + '_EQR_BIG' + '.png')) and
-    FileExists(System.IOUtils.TPath.Combine( {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
-      (){$ENDIF},
-    currentAccount.name + '_EQR_SMALL' + '.png'));
+  result := FileExists(System.IOUtils.TPath.Combine(
+    {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
+    (){$ENDIF}, currentAccount.name + '_EQR_BIG' + '.png')) and
+    FileExists(System.IOUtils.TPath.Combine(
+    {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
+    (){$ENDIF}, currentAccount.name + '_EQR_SMALL' + '.png'));
 end;
 
 procedure SendEQR;
@@ -497,7 +497,8 @@ begin
   with frmhome do
   begin
     FileName := currentAccount.name + '_EQR_BIG';
-    ImgPath := System.IOUtils.TPath.Combine( {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
+    ImgPath := System.IOUtils.TPath.Combine(
+    {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
       (){$ENDIF}, FileName + '.png');
     if not FileExists(ImgPath) then
     begin
@@ -530,12 +531,12 @@ begin
     qrimg.Free;
     Stream.Free;
     FileName := currentAccount.name + '_EQR_SMALL';
-    ImgPath := System.IOUtils.TPath.Combine( {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
+    ImgPath := System.IOUtils.TPath.Combine(
+    {$IFDEF MSWINDOWS}HOME_PATH{$ELSE}System.IOUtils.TPath.GetDownloadsPath
       (){$ENDIF}, FileName + '.png');
     if not FileExists(ImgPath) then
     begin
       img := StrToQRBitmap(currentAccount.EncryptedMasterSeed);
-
 
       img.SaveToFile(ImgPath);
     end;
@@ -874,6 +875,7 @@ begin
         raise Exception.create(dictionary('FailedToDecrypt'));
         exit(false);
       end;
+   startFullfillingKeypool(MasterSeed);
       // {$IFDEF MSWINDOWS}lblPrivateKey:=PrivateKeyMemo;{$ENDIF}
       lblPrivateKey.Text := cutEveryNChar(4, tempStr);
       lblWIFKey.Text := PrivKeyToWIF(tempStr, wd.isCompressed,
@@ -895,7 +897,7 @@ begin
       lblPrivateKey.Text := priv256forhd(wd.coin, wd.X, wd.Y, MasterSeed);
       lblWIFKey.Text := PrivKeyToWIF(lblPrivateKey.Text, wd.coin <> 4,
         AvailableCoin[TWalletInfo(wd).coin].wifByte);
-
+     startFullfillingKeypool(MasterSeed);
       wipeAnsiString(MasterSeed);
 
     end;
@@ -1081,6 +1083,7 @@ begin
       popupWindow.create(dictionary('FailedToDecrypt'));
       exit;
     end;
+     startFullfillingKeypool(MasterSeed);
     switchTab(pageControl, seedGenerated);
     BackupMemo.Lines.Clear;
     BackupMemo.Lines.Add(dictionary('MasterseedMnemonic') + ':');

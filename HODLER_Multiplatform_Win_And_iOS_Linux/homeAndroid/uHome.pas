@@ -1067,7 +1067,7 @@ implementation
 
 uses ECCObj, Bitcoin, Ethereum, secp256k1, uSeedCreation, coindata, base58,
   AccountRelated,
-  TokenData, QRRelated, FileManagerRelated, WalletViewRelated, BackupRelated;
+  TokenData, QRRelated, FileManagerRelated, WalletViewRelated, BackupRelated,KeypoolRelated;
 {$R *.fmx}
 {$R *.SmXhdpiPh.fmx ANDROID}
 {$R *.iPhone55in.fmx IOS}

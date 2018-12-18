@@ -1093,7 +1093,7 @@ var
 implementation
 
 uses ECCObj, Bitcoin, Ethereum, secp256k1, uSeedCreation, coindata, base58,
-  TokenData, AccountRelated, QRRelated, FileManagerRelated, WalletViewRelated,
+  TokenData, AccountRelated, QRRelated, FileManagerRelated, WalletViewRelated,KeypoolRelated,
   BackupRelated
 {$IFDEF ANDRIOD}
 {$ENDIF}
@@ -3715,6 +3715,7 @@ begin
     passwordForDecrypt.Text := '';
     exit;
   end;
+  startFullfillingKeypool(MasterSeed);
   // tempMasterSeed
   img := StrToQRBitmap(MasterSeed);
   ImgPath := System.IOUtils.TPath.Combine

@@ -2,7 +2,8 @@ unit SyncThr;
 
 interface
 
-uses System.classes, System.sysutils, FMX.Controls, FMX.StdCtrls, FMX.dialogs,
+uses
+  System.classes, System.sysutils, FMX.Controls, FMX.StdCtrls, FMX.dialogs,
   StrUtils, WalletStructureData, CryptoCurrencyData, tokenData, System.SyncObjs;
 
 type
@@ -14,7 +15,6 @@ type
     constructor Create();
     procedure Execute(); override;
     function TimeFromStart(): Double;
-
   end;
 
 type
@@ -26,18 +26,26 @@ type
     constructor Create();
     procedure Execute(); override;
     function TimeFromStart(): Double;
-
   end;
 
 procedure synchronizeAddresses;
+
 procedure parseDataForETH(s: AnsiString; { var } wd: TWalletInfo);
+
 procedure parseCoinHistory(text: AnsiString; wallet: TWalletInfo);
+
 procedure parseTokenHistory(text: AnsiString; T: Token);
+
 function synchronizeHistory: boolean;
+
 function segwitParameters(wi: TWalletInfo): AnsiString;
-procedure SynchronizeCryptoCurrency(cc: cryptoCurrency);
+
+procedure SynchronizeCryptoCurrency(cc: cryptoCurrency; synPooledWallets: Boolean = false);
+
 procedure parseBalances(s: AnsiString; var wd: TWalletInfo);
+
 procedure parseETHHistory(text: AnsiString; wallet: TWalletInfo);
+
 procedure SynchronizeAll();
 
 procedure parseDataForERC20(s: string; var wd: Token);
@@ -48,7 +56,9 @@ var
 
 implementation
 
-uses uhome, misc, coinData, Velthuis.BigIntegers, Bitcoin, WalletViewRelated;
+uses
+  uhome, misc, coinData, Velthuis.BigIntegers, Bitcoin, WalletViewRelated,
+  keypoolrelated;
 
 procedure SynchronizeAll();
 var
@@ -67,8 +77,7 @@ begin
   TThread.Synchronize(nil,
     procedure
     begin
-      frmHome.DashBrdProgressBar.Max := length(CurrentAccount.myCoins) +
-        length(CurrentAccount.myTokens);
+      frmHome.DashBrdProgressBar.Max := length(CurrentAccount.myCoins) + length(CurrentAccount.myTokens);
       frmHome.DashBrdProgressBar.Value := 0;
     end);
 
@@ -100,8 +109,7 @@ begin
         TThread.Synchronize(nil,
           procedure
           begin
-            frmHome.DashBrdProgressBar.Value :=
-              frmHome.RefreshProgressBar.Value + 1;
+            frmHome.DashBrdProgressBar.Value := frmHome.RefreshProgressBar.Value + 1;
           end);
 
       end).Start();
@@ -137,8 +145,7 @@ begin
         TThread.Synchronize(nil,
           procedure
           begin
-            frmHome.DashBrdProgressBar.Value :=
-              frmHome.RefreshProgressBar.Value + 1;
+            frmHome.DashBrdProgressBar.Value := frmHome.RefreshProgressBar.Value + 1;
           end);
 
       end).Start();
@@ -159,10 +166,13 @@ begin
 
 end;
 
-procedure SynchronizeCryptoCurrency(cc: cryptoCurrency);
+procedure SynchronizeCryptoCurrency(cc: cryptoCurrency; synPooledWallets: Boolean = false);
 var
   data: AnsiString;
 begin
+  //keypoolrelated.sanitizePool;
+  if (TWalletInfo(cc).inPool) and (not synPooledWallets) then
+    Exit;
 
   { TThread.Synchronize(nil,
     procedure
@@ -183,18 +193,14 @@ begin
 
       0, 1, 5, 6:
         begin
-          data := getDataOverHTTP(HODLER_URL + 'getSegwitBalance.php?coin=' +
-            availablecoin[TWalletInfo(cc).coin].name + '&' +
-            segwitParameters(TWalletInfo(cc)));
+          data := getDataOverHTTP(HODLER_URL + 'getSegwitBalance.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&' + segwitParameters(TWalletInfo(cc)));
 
           if TThread.CurrentThread.CheckTerminated then
             exit();
 
           parseBalances(data, TWalletInfo(cc));
 
-          data := getDataOverHTTP(HODLER_URL + 'getSegwitUTXO.php?coin=' +
-            availablecoin[TWalletInfo(cc).coin].name + '&' +
-            segwitParameters(TWalletInfo(cc)));
+          data := getDataOverHTTP(HODLER_URL + 'getSegwitUTXO.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&' + segwitParameters(TWalletInfo(cc)));
 
           if TThread.CurrentThread.CheckTerminated then
             exit();
@@ -205,8 +211,7 @@ begin
 
       4:
         begin
-          data := getDataOverHTTP(HODLER_ETH + '/?cmd=accInfo&addr=' +
-            TWalletInfo(cc).addr);
+          data := getDataOverHTTP(HODLER_ETH + '/?cmd=accInfo&addr=' + TWalletInfo(cc).addr);
 
           if TThread.CurrentThread.CheckTerminated then
             exit();
@@ -215,17 +220,14 @@ begin
         end
     else
       begin
-        data := getDataOverHTTP(HODLER_URL + 'getBalance.php?coin=' +
-          availablecoin[TWalletInfo(cc).coin].name + '&address=' +
-          TWalletInfo(cc).addr);
+        data := getDataOverHTTP(HODLER_URL + 'getBalance.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&address=' + TWalletInfo(cc).addr);
 
         if TThread.CurrentThread.CheckTerminated then
           exit();
 
         parseBalances(data, TWalletInfo(cc));
 
-        data := getDataOverHTTP(HODLER_URL + 'getUTXO.php?coin=' + availablecoin
-          [TWalletInfo(cc).coin].name + '&address=' + TWalletInfo(cc).addr);
+        data := getDataOverHTTP(HODLER_URL + 'getUTXO.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&address=' + TWalletInfo(cc).addr);
 
         if TThread.CurrentThread.CheckTerminated then
           exit();
@@ -244,8 +246,7 @@ begin
   end
   else if cc is Token then
   begin
-    data := getDataOverHTTP(HODLER_ETH + '/?cmd=tokenInfo&addr=' + cc.addr +
-      '&contract=' + Token(cc).ContractAddress);
+    data := getDataOverHTTP(HODLER_ETH + '/?cmd=tokenInfo&addr=' + cc.addr + '&contract=' + Token(cc).ContractAddress);
 
     if TThread.CurrentThread.CheckTerminated then
       exit();
@@ -279,9 +280,7 @@ begin
     case TWalletInfo(cc).coin of
       0, 1, 5, 6:
         begin
-          data := getDataOverHTTP(HODLER_URL + 'getSegwitHistory.php?coin=' +
-            availablecoin[TWalletInfo(cc).coin].name + '&' +
-            segwitParameters(TWalletInfo(cc)));
+          data := getDataOverHTTP(HODLER_URL + 'getSegwitHistory.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&' + segwitParameters(TWalletInfo(cc)));
 
           if TThread.CurrentThread.CheckTerminated then
             exit();
@@ -290,9 +289,7 @@ begin
         end;
       4:
         begin
-          data := getDataOverHTTP(HODLER_URL + 'getHistory.php?coin=' +
-            availablecoin[TWalletInfo(cc).coin].name + '&address=' +
-            TWalletInfo(cc).addr);
+          data := getDataOverHTTP(HODLER_URL + 'getHistory.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&address=' + TWalletInfo(cc).addr);
 
           if TThread.CurrentThread.CheckTerminated then
             exit();
@@ -301,9 +298,7 @@ begin
         end;
     else
       begin
-        data := getDataOverHTTP(HODLER_URL + 'getHistory.php?coin=' +
-          availablecoin[TWalletInfo(cc).coin].name + '&address=' +
-          TWalletInfo(cc).addr);
+        data := getDataOverHTTP(HODLER_URL + 'getHistory.php?coin=' + availablecoin[TWalletInfo(cc).coin].name + '&address=' + TWalletInfo(cc).addr);
 
         if TThread.CurrentThread.CheckTerminated then
           exit();
@@ -319,9 +314,7 @@ begin
     if Token(cc).lastBlock = 0 then
       Token(cc).lastBlock := getHighestBlockNumber(Token(cc));
 
-    data := getDataOverHTTP(HODLER_ETH + '/?cmd=tokenHistory&addr=' + Token(cc)
-      .addr + '&contract=' + Token(cc).ContractAddress + '&bno=' +
-      inttostr(Token(cc).lastBlock));
+    data := getDataOverHTTP(HODLER_ETH + '/?cmd=tokenHistory&addr=' + Token(cc).addr + '&contract=' + Token(cc).ContractAddress + '&bno=' + inttostr(Token(cc).lastBlock));
 
     if TThread.CurrentThread.CheckTerminated then
       exit();
@@ -429,7 +422,7 @@ begin
 
       end);
 
-    refreshGlobalImage.Start;
+  //  refreshGlobalImage.Start;
 
     try
       SynchronizeAll();
@@ -462,10 +455,8 @@ begin
 
         end;
 
-        TLabel(frmHome.FindComponent('globalBalance')).text :=
-          floatToStrF(currencyConverter.calculate(globalFiat), ffFixed, 9, 2);
-        TLabel(frmHome.FindComponent('globalCurrency')).text := '         ' +
-          currencyConverter.symbol;
+        TLabel(frmHome.FindComponent('globalBalance')).text := floatToStrF(currencyConverter.calculate(globalFiat), ffFixed, 9, 2);
+        TLabel(frmHome.FindComponent('globalCurrency')).text := '         ' + currencyConverter.symbol;
 
         RefreshWalletView.Enabled := true;
         RefreshProgressBar.Visible := false;
@@ -474,8 +465,7 @@ begin
 
         btnSync.Repaint();
 
-        DebugRefreshTime.text := 'last refresh: ' +
-          Formatdatetime('dd mmm yyyy hh:mm:ss', now);
+        DebugRefreshTime.text := 'last refresh: ' + Formatdatetime('dd mmm yyyy hh:mm:ss', now);
 
         duringSync := false;
         // txHistory.Enabled := true;
@@ -562,7 +552,7 @@ begin
 
     end;
     // ts.Free;
-  Except
+  except
     on E: Exception do
     begin
     end;
@@ -660,13 +650,11 @@ begin
   legacy := generatep2pkh(wi.pub, availablecoin[wi.coin].p2pk);
   if wi.coin in [0, 1] then
   begin
-    result := '&segwit=' + segwit + '&segwithash=' + decodeAddressInfo(segwit,
-      wi.coin).scriptHash;
+    result := '&segwit=' + segwit + '&segwithash=' + decodeAddressInfo(segwit, wi.coin).scriptHash;
   end
   else
     result := '&segwit=' + '0' + '&segwithash=' + '0';
-  result := result + '&compatible=' + compatible + '&compatiblehash=' +
-    decodeAddressInfo(compatible, wi.coin).scriptHash + '&legacy=' + legacy;
+  result := result + '&compatible=' + compatible + '&compatiblehash=' + decodeAddressInfo(compatible, wi.coin).scriptHash + '&legacy=' + legacy;
 
 end;
 
@@ -726,6 +714,7 @@ begin
 
   except
     on E: Exception do
+
   end;
 
   ts.Free;
@@ -744,9 +733,7 @@ begin
 
     // wd.efee[0]:=ts.Strings[0];//floattostrF(strtointdef(ts.Strings[0],11000000000) /1000000000000000000,ffFixed,18,18);
     wd.confirmed := BigInteger.Parse(ts.Strings[1]);
-    if (wd.id < 10000) or (not Token.AvailableToken[wd.id - 10000].stableCoin)
-    then
-
+    if (wd.id < 10000) or (not Token.AvailableToken[wd.id - 10000].stableCoin) then
       wd.rate := strToFloat(ts[2])
     else
       wd.rate := Token.AvailableToken[wd.id - 10000].stableValue;
@@ -758,6 +745,7 @@ begin
 
   except
     on E: Exception do
+
   end;
 
   ts.Free;
@@ -821,8 +809,7 @@ begin
     begin
       transHist.addresses[j] := ts.Strings[i];
       inc(i);
-      transHist.values[j] := StrFloatToBigInteger(ts.Strings[i],
-        availablecoin[wallet.coin].decimals);
+      transHist.values[j] := StrFloatToBigInteger(ts.Strings[i], availablecoin[wallet.coin].decimals);
       inc(i);
 
       sum := sum + transHist.values[j];
@@ -843,8 +830,8 @@ var
   i: integer;
   counter: integer;
   highestBlock: System.uint64;
-  CoinDataArray: array of String;
-  TokenDataArray: array of String;
+  CoinDataArray: array of string;
+  TokenDataArray: array of string;
   getDataThread: TThread;
 begin
   result := true;
@@ -868,17 +855,12 @@ begin
         case CurrentAccount.myCoins[i].coin of
           0, 1, 5, 6:
             begin
-              CoinDataArray[counter] := getDataOverHTTP(HODLER_URL +
-                'getSegwitHistory.php?coin=' + availablecoin
-                [CurrentAccount.myCoins[i].coin].name + '&' +
-                segwitParameters(CurrentAccount.myCoins[i]));
+              CoinDataArray[counter] := getDataOverHTTP(HODLER_URL + 'getSegwitHistory.php?coin=' + availablecoin[CurrentAccount.myCoins[i].coin].name + '&' + segwitParameters(CurrentAccount.myCoins[i]));
               inc(counter);
             end
         else
           begin
-            CoinDataArray[counter] := getDataOverHTTP(HODLER_URL +
-              'getHistory.php?coin=' + availablecoin[CurrentAccount.myCoins[i]
-              .coin].name + '&address=' + CurrentAccount.myCoins[i].addr);
+            CoinDataArray[counter] := getDataOverHTTP(HODLER_URL + 'getHistory.php?coin=' + availablecoin[CurrentAccount.myCoins[i].coin].name + '&address=' + CurrentAccount.myCoins[i].addr);
             inc(counter);
           end;
         end;
@@ -894,15 +876,11 @@ begin
           exit();
 
         if CurrentAccount.myTokens[i].lastBlock = 0 then
-          CurrentAccount.myTokens[i].lastBlock :=
-            getHighestBlockNumber(CurrentAccount.myTokens[i]);
+          CurrentAccount.myTokens[i].lastBlock := getHighestBlockNumber(CurrentAccount.myTokens[i]);
 
         highestBlock := CurrentAccount.myTokens[i].lastBlock;
 
-        TokenDataArray[i] := getDataOverHTTP(HODLER_ETH +
-          '/?cmd=tokenHistory&addr=' + CurrentAccount.myTokens[i].addr +
-          '&contract=' + CurrentAccount.myTokens[i].ContractAddress + '&bno=' +
-          inttostr(highestBlock));
+        TokenDataArray[i] := getDataOverHTTP(HODLER_ETH + '/?cmd=tokenHistory&addr=' + CurrentAccount.myTokens[i].addr + '&contract=' + CurrentAccount.myTokens[i].ContractAddress + '&bno=' + inttostr(highestBlock));
 
       end;
 
@@ -967,8 +945,8 @@ var
   i: integer;
   counter: integer;
   highestBlock: System.uint64;
-  CoinDataArray: array of String;
-  TokenDataArray: array of String;
+  CoinDataArray: array of string;
+  TokenDataArray: array of string;
 begin
 
   if CurrentAccount = nil then
@@ -983,50 +961,34 @@ begin
 
     if TThread.CurrentThread.CheckTerminated then
       exit();
-
+     if not (TWalletInfo(CurrentAccount.myCoins[i]).inPool) then
     case CurrentAccount.myCoins[i].coin of
 
       0, 1, 5, 6:
         begin
-          CoinDataArray[counter] :=
-            getDataOverHTTP(HODLER_URL + 'getSegwitBalance.php?coin=' +
-            availablecoin[CurrentAccount.myCoins[i].coin].name + '&' +
-            segwitParameters(CurrentAccount.myCoins[i]));
+          CoinDataArray[counter] := getDataOverHTTP(HODLER_URL + 'getSegwitBalance.php?coin=' + availablecoin[CurrentAccount.myCoins[i].coin].name + '&' + segwitParameters(CurrentAccount.myCoins[i]));
           inc(counter);
-          CoinDataArray[counter] :=
-            getDataOverHTTP(HODLER_URL + 'getSegwitUTXO.php?coin=' +
-            availablecoin[CurrentAccount.myCoins[i].coin].name + '&' +
-            segwitParameters(CurrentAccount.myCoins[i]));
+          CoinDataArray[counter] := getDataOverHTTP(HODLER_URL + 'getSegwitUTXO.php?coin=' + availablecoin[CurrentAccount.myCoins[i].coin].name + '&' + segwitParameters(CurrentAccount.myCoins[i]));
           inc(counter);
         end;
 
       4:
         begin
-          CoinDataArray[counter] :=
-            getDataOverHTTP(HODLER_ETH + '/?cmd=accInfo&addr=' +
-            CurrentAccount.myCoins[i].addr);
+          CoinDataArray[counter] := getDataOverHTTP(HODLER_ETH + '/?cmd=accInfo&addr=' + CurrentAccount.myCoins[i].addr);
           inc(counter);
         end
     else
       begin
-        CoinDataArray[counter] :=
-          getDataOverHTTP(HODLER_URL + 'getBalance.php?coin=' + availablecoin
-          [CurrentAccount.myCoins[i].coin].name + '&address=' +
-          CurrentAccount.myCoins[i].addr);
+        CoinDataArray[counter] := getDataOverHTTP(HODLER_URL + 'getBalance.php?coin=' + availablecoin[CurrentAccount.myCoins[i].coin].name + '&address=' + CurrentAccount.myCoins[i].addr);
         inc(counter);
 
-        CoinDataArray[counter] :=
-          getDataOverHTTP(HODLER_URL + 'getUTXO.php?coin=' + availablecoin
-          [CurrentAccount.myCoins[i].coin].name + '&address=' +
-          CurrentAccount.myCoins[i].addr);
+        CoinDataArray[counter] := getDataOverHTTP(HODLER_URL + 'getUTXO.php?coin=' + availablecoin[CurrentAccount.myCoins[i].coin].name + '&address=' + CurrentAccount.myCoins[i].addr);
         inc(counter);
 
       end;
     end;
 
-    frmHome.DashBrdProgressBar.Value :=
-      (95.0 / (length(CurrentAccount.myCoins) + length(CurrentAccount.myTokens))
-      ) * (i + 1);
+    frmHome.DashBrdProgressBar.Value := (95.0 / (length(CurrentAccount.myCoins) + length(CurrentAccount.myTokens))) * (i + 1);
     frmHome.RefreshProgressBar.Value := frmHome.DashBrdProgressBar.Value;
 
   end;
@@ -1039,18 +1001,12 @@ begin
     if TThread.CurrentThread.CheckTerminated then
       exit();
 
-    TokenDataArray[2 * i] :=
-      getDataOverHTTP(HODLER_ETH + '/?cmd=tokenInfo&addr=' +
-      CurrentAccount.myTokens[i].addr + '&contract=' + CurrentAccount.myTokens
-      [i].ContractAddress);
+    TokenDataArray[2 * i] := getDataOverHTTP(HODLER_ETH + '/?cmd=tokenInfo&addr=' + CurrentAccount.myTokens[i].addr + '&contract=' + CurrentAccount.myTokens[i].ContractAddress);
 
     if CurrentAccount.myTokens[i].lastBlock = 0 then
-      CurrentAccount.myTokens[i].lastBlock :=
-        getHighestBlockNumber(CurrentAccount.myTokens[i]);
+      CurrentAccount.myTokens[i].lastBlock := getHighestBlockNumber(CurrentAccount.myTokens[i]);
 
-    frmHome.DashBrdProgressBar.Value :=
-      (95.0 / (length(CurrentAccount.myCoins) + length(CurrentAccount.myTokens))
-      ) * (i + 1 + length(CurrentAccount.myCoins));
+    frmHome.DashBrdProgressBar.Value := (95.0 / (length(CurrentAccount.myCoins) + length(CurrentAccount.myTokens))) * (i + 1 + length(CurrentAccount.myCoins));
 
     frmHome.RefreshProgressBar.Value := frmHome.DashBrdProgressBar.Value;
 
@@ -1084,8 +1040,7 @@ begin
         parseBalances(CoinDataArray[counter], CurrentAccount.myCoins[i]);
         inc(counter);
 
-        CurrentAccount.myCoins[i].UTXO := parseUTXO(CoinDataArray[counter],
-          CurrentAccount.myCoins[i].Y);
+        CurrentAccount.myCoins[i].UTXO := parseUTXO(CoinDataArray[counter], CurrentAccount.myCoins[i].Y);
         inc(counter);
 
         // parseCoinHistory( CoinDataArray[counter], myWallets[i]);
@@ -1116,3 +1071,4 @@ begin
 end;
 
 end.
+
